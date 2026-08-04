@@ -1,0 +1,70 @@
+
+## 2. Orquestração Docker Compose
+
+version: '3.8'
+
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-tx:
+    image: postgres:15
+    container_name: postgres-tx
+    environment:
+      POSTGRES_DB: transaction_db
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+
+  postgres-cons:
+    image: postgres:15
+    container_name: postgres-cons
+    environment:
+      POSTGRES_DB: consolidation_db
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5433:5432"
+
+  transaction-service:
+    build:
+      context: ./transaction-service
+    container_name: transaction-service
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-tx:5432/transaction_db
+      SPRING_RABBITMQ_HOST: rabbitmq
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      postgres-tx:
+        condition: service_started
+
+  consolidation-service:
+    build:
+      context: ./consolidation-service
+    container_name: consolidation-service
+    ports:
+      - "8082:8082"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-cons:5432/consolidation_db
+      SPRING_RABBITMQ_HOST: rabbitmq
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      postgres-cons:
+        condition: service_started
