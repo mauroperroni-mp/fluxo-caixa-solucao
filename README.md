@@ -29,3 +29,10 @@ Esta é uma solução arquitetural baseada em **Microserviços** e **Arquitetura
    ```bash
    git clone [https://github.com/SEU_USUARIO/fluxo-caixa-solucao.git](https://github.com/SEU_USUARIO/fluxo-caixa-solucao.git)
    cd fluxo-caixa-solucao
+
+### Desenhos
+**Figura 1: Arquitetura Alvo da Solução Contexto**
+![Contexto](DiagramaC4_contexto.jpg)
+
+**Figura 1: Arquitetura Alvo da Solução Container**
+![Container](DiagramaC4_container.jpg)
