@@ -30,6 +30,31 @@ Esta é uma solução arquitetural baseada em **Microserviços** e **Arquitetura
    git clone [https://github.com/SEU_USUARIO/fluxo-caixa-solucao.git](https://github.com/SEU_USUARIO/fluxo-caixa-solucao.git)
    cd fluxo-caixa-solucao
 
+## 🚀 Como Executar o Projeto
+
+### Pré-requisitos
+* Docker & Docker Compose
+* Java 17+ e Maven (caso deseje rodar localmente fora do container)
+
+### 1. Executando os Testes Automatizados
+```bash
+# Executa testes em ambos os microsserviços
+cd transaction-service && ./mvnw test
+cd ../consolidation-service && ./mvnw test
+```
+
+### 2. Subindo todo o Ambiente com Docker
+```bash
+# Na raiz do repositório
+docker-compose up --build -d
+```
+
+### 3. Validando os Serviços Ativos
+* **Transaction Service:** `http://localhost:8080/actuator/health`
+* **Consolidation Service:** `http://localhost:8081/actuator/health`
+* **Painel RabbitMQ:** `http://localhost:15672` (Usuário: `guest` / Senha: `guest`)
+---
+
 ### Desenhos
 **Figura 1: Arquitetura Alvo da Solução Contexto**
 ![Contexto](DiagramaC4_contexto.jpg)
