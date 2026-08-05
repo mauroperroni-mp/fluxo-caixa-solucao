@@ -6,6 +6,8 @@ Este documento define as diretrizes e mecanismos de proteção adotados para gar
 
 ## 1. Segurança na Camada de Integração (APIs REST)
 
+```json
+
 [ Cliente / POS / App ]
 │
 ▼  mTLS / HTTPS (TLS 1.3)
@@ -17,6 +19,7 @@ Este documento define as diretrizes e mecanismos de proteção adotados para gar
 ┌──────────────────────────────────┐
 │  transaction / consolidation     │
 └──────────────────────────────────┘
+```
 
 
 ### 1.1. Autenticação e Autorização (OAuth2 + OIDC)
