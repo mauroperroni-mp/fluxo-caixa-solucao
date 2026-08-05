@@ -67,3 +67,17 @@ A solução adota o padrão **CQRS (Command Query Responsibility Segregation)** 
   "finalBalance": 150.50
 }
 ```
+### 5. Estrutura de Dados (Modelagem de Banco de Dados)
+Tabela: transactions (Banco transaction_db)
+
+```SQL
+CREATE TABLE transactions (
+    id BIGSERIAL PRIMARY KEY,
+    merchant_id VARCHAR(50) NOT NULL,
+    type VARCHAR(10) NOT NULL, -- 'CREDIT' ou 'DEBIT'
+    amount NUMERIC(15, 2) NOT NULL,
+    description VARCHAR(255),
+    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX idx_transactions_merchant_date ON transactions(merchant_id, created_at);
+```
