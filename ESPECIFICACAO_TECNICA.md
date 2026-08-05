@@ -94,3 +94,29 @@ CREATE TABLE daily_balances (
     CONSTRAINT uk_merchant_date UNIQUE (merchant_id, date)
 );
 ```
+### 6. Arquitetura de Comunicação e Resiliência
+```IMG
+[ Cliente / POS ]
+       │
+       ▼ (HTTP POST)
+┌───────────────────────────┐
+│    transaction-service    │
+└─────────────┬─────────────┘
+              │ (Persiste na base de escrita)
+              │
+              ▼ (Publica mensagem)
+        ┌───────────┐
+        │ RabbitMQ  │
+        └─────┬─────┘
+              │ (Consumo Assíncrono com ACK)
+              ▼
+┌───────────────────────────┐
+│   consolidation-service   │
+└─────────────┬─────────────┘
+              │ (Atualiza agregado diário)
+              ▼
+┌───────────────────────────┐
+│     GET /consolidation    │ ◄── [ Cliente / Dashboard ]
+└───────────────────────────┘
+```
+### Garantia de Disponibilidade (RNF-01): Se o consolidation-service falhar, as mensagens ficam retidas com segurança na fila durável do RabbitMQ. Quando o serviço recuperar, processará a fila sem perder requisições do transaction-service.
