@@ -21,6 +21,15 @@ spring:
     username: guest
     password: guest
 
+    management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      show-details: always
+
 mq:
   queues:
     transaction-created: transaction.created.queue
