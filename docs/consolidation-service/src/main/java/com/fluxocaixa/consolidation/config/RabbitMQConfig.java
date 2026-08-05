@@ -1,7 +1,9 @@
-package com.fluxocaixa.transaction.config;
+package com.fluxocaixa.consolidation.config;
 
-import org.springframework.amqp.core.*;
+import org.springframework.amqp.core.Queue;
+import org.springframework.amqp.core.QueueBuilder;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
+import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -9,35 +11,25 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RabbitMQConfig {
 
-    @Value("${mq.queues.transaction-created}")
+    @Value("${mq.queues.transaction-consolidation}")
     private String queueName;
 
-    @Value("${mq.exchanges.transaction}")
-    private String exchangeName;
-
-    @Value("${mq.routing-keys.transaction-created}")
-    private String routingKey;
-
+    /**
+     * Declara a fila durável no RabbitMQ.
+     * Garante que a fila seja criada caso o consolidation-service suba antes do transaction-service.
+     */
     @Bean
-    public Queue queue() {
-        return QueueBuilder.durable(queueName)
-                .withArgument("x-dead-letter-exchange", exchangeName + ".dlx")
-                .withArgument("x-dead-letter-routing-key", routingKey + ".dlq")
-                .build();
+    public Queue consolidationQueue() {
+        return QueueBuilder.durable(queueName).build();
     }
 
+    /**
+     * Define o conversor de mensagens para JSON.
+     * Permite que o @RabbitListener no ConsolidationService deserialize o payload JSON 
+     * recebido na fila diretamente para o objeto TransactionMessageDTO.
+     */
     @Bean
-    public DirectExchange exchange() {
-        return new DirectExchange(exchangeName);
-    }
-
-    @Bean
-    public Binding binding(Queue queue, DirectExchange exchange) {
-        return BindingBuilder.bind(queue).to(exchange).with(routingKey);
-    }
-
-    @Bean
-    public Jackson2JsonMessageConverter messageConverter() {
+    public MessageConverter jsonMessageConverter() {
         return new Jackson2JsonMessageConverter();
     }
 }
