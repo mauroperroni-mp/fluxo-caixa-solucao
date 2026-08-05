@@ -5,6 +5,9 @@ Para garantir a alta disponibilidade e suportar a vazão de picos sem degradaç�
 ---
 
 ## 1. Mapeamento da Arquitetura de Observabilidade
+
+```json
+
 ┌───────────────────────────┐      ┌─────────────────────────┐
 │ transaction/consolidation │ ───► │ Micrometer / Actuator   │
 └───────────────────────────┘      └────────────┬────────────┘
@@ -14,8 +17,8 @@ Para garantir a alta disponibilidade e suportar a vazão de picos sem degradaç�
 │     Grafana Dashboards    │ ◄─── │   Prometheus Server     │
 └───────────────────────────┘      └─────────────────────────┘
 
+```
 
----
 
 ## 2. Coleta de Métricas (Prometheus + Grafana)
 Cada microsserviço Spring Boot expõe endpoints de saúde e métricas nativas através do **Spring Boot Actuator** e **Micrometer** no caminho `/actuator/prometheus`.
