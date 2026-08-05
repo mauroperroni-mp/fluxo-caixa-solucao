@@ -50,3 +50,11 @@ A solução adota o padrão **CQRS (Command Query Responsibility Segregation)** 
   "amount": 150.50,
   "description": "Venda Balcão"
 }
+```
+
+### 4.2. Consultar Saldo Consolidado Diário
+* **HTTP Method:** 'GET'
+
+* **URL:** '/api/v1/consolidation/daily?merchantId=loja-123&date=2026-08-04'
+
+* **Response (200 OK):**
