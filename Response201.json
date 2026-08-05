@@ -1,0 +1,8 @@
+{
+  "id": 1,
+  "merchantId": "loja-123",
+  "type": "CREDIT",
+  "amount": 150.50,
+  "description": "Venda Balcão",
+  "createdAt": "2026-08-04T15:30:00Z"
+}
