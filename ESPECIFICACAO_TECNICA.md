@@ -58,3 +58,12 @@ A solução adota o padrão **CQRS (Command Query Responsibility Segregation)** 
 * **URL:** '/api/v1/consolidation/daily?merchantId=loja-123&date=2026-08-04'
 
 * **Response (200 OK):**
+```json
+{
+  "merchantId": "loja-123",
+  "date": "2026-08-04",
+  "totalCredit": 150.50,
+  "totalDebit": 0.00,
+  "finalBalance": 150.50
+}
+```
