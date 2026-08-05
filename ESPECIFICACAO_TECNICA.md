@@ -81,3 +81,16 @@ CREATE TABLE transactions (
 );
 CREATE INDEX idx_transactions_merchant_date ON transactions(merchant_id, created_at);
 ```
+
+### Tabela: daily_balances (Banco consolidation_db)
+```SQL
+CREATE TABLE daily_balances (
+    id BIGSERIAL PRIMARY KEY,
+    merchant_id VARCHAR(50) NOT NULL,
+    date DATE NOT NULL,
+    total_credit NUMERIC(15, 2) DEFAULT 0.00,
+    total_debit NUMERIC(15, 2) DEFAULT 0.00,
+    final_balance NUMERIC(15, 2) DEFAULT 0.00,
+    CONSTRAINT uk_merchant_date UNIQUE (merchant_id, date)
+);
+```
