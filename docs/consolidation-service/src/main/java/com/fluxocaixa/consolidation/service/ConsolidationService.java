@@ -1,10 +1,12 @@
 package com.fluxocaixa.consolidation.service;
 
+import com.fluxocaixa.consolidation.dto.DailyBalanceDTO;
 import com.fluxocaixa.consolidation.dto.TransactionMessageDTO;
 import com.fluxocaixa.consolidation.model.DailyBalance;
 import com.fluxocaixa.consolidation.repository.DailyBalanceRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,58 +18,73 @@ import java.time.LocalDate;
 @RequiredArgsConstructor
 public class ConsolidationService {
 
-    private final DailyBalanceRepository repository;
+    private final DailyBalanceRepository dailyBalanceRepository;
 
     /**
-     * Processa um evento de transação recebido da fila de forma assíncrona
-     * e atualiza o saldo consolidado do comerciante para a data correspondente.
+     * Listener que consome os eventos 'transaction-created' publicados pelo transaction-service.
+     * Atualiza o saldo consolidado do comerciante para a data da transação.
      */
+    @RabbitListener(queues = "${mq.queues.transaction-consolidation}")
     @Transactional
-    public void processTransaction(TransactionMessageDTO message) {
-        log.info("Processando consolidação para MerchantId: {}, Data: {}", message.merchantId(), message.date());
+    public void processTransactionEvent(TransactionMessageDTO eventPayload) {
+        log.info("Processando evento de transação ID: {} para o merchant: {}", 
+                eventPayload.transactionId(), eventPayload.merchantId());
 
-        // Busca o saldo existente para a data ou cria uma nova estrutura zerada
-        DailyBalance balance = repository.findByMerchantIdAndDate(message.merchantId(), message.date())
-                .orElseGet(() -> {
-                    log.info("Novo registro de saldo diário criado para MerchantId: {} na data: {}", message.merchantId(), message.date());
-                    return DailyBalance.builder()
-                            .merchantId(message.merchantId())
-                            .date(message.date())
-                            .totalCredit(BigDecimal.ZERO)
-                            .totalDebit(BigDecimal.ZERO)
-                            .finalBalance(BigDecimal.ZERO)
-                            .build();
-                });
+        LocalDate transactionDate = eventPayload.timestamp() != null ? 
+                eventPayload.timestamp().toLocalDate() : LocalDate.now();
 
-        // Aplica o crédito ou débito
-        if ("CREDIT".equalsIgnoreCase(message.type())) {
-            balance.setTotalCredit(balance.getTotalCredit().add(message.amount()));
-            balance.setFinalBalance(balance.getFinalBalance().add(message.amount()));
-        } else if ("DEBIT".equalsIgnoreCase(message.type())) {
-            balance.setTotalDebit(balance.getTotalDebit().add(message.amount()));
-            balance.setFinalBalance(balance.getFinalBalance().subtract(message.amount()));
-        } else {
-            log.warn("Tipo de transação desconhecido recebido: {}", message.type());
-            throw new IllegalArgumentException("Tipo de transação inválido: " + message.type());
-        }
-
-        // Salva o registro atualizado no banco de dados de leitura/consolidação
-        repository.save(balance);
-        log.info("Saldo consolidado atualizado. MerchantId: {}, Novo Saldo Final: {}", balance.getMerchantId(), balance.getFinalBalance());
-    }
-
-    /**
-     * Retorna o saldo consolidado diário de um comerciante em uma determinada data.
-     */
-    @Transactional(readOnly = true)
-    public DailyBalance getDailyBalance(String merchantId, LocalDate date) {
-        return repository.findByMerchantIdAndDate(merchantId, date)
-                .orElse(DailyBalance.builder()
-                        .merchantId(merchantId)
-                        .date(date)
+        // Busca ou cria o registro de saldo do dia para o merchant
+        DailyBalance balance = dailyBalanceRepository
+                .findByMerchantIdAndDate(eventPayload.merchantId(), transactionDate)
+                .orElseGet(() -> DailyBalance.builder()
+                        .merchantId(eventPayload.merchantId())
+                        .date(transactionDate)
                         .totalCredit(BigDecimal.ZERO)
                         .totalDebit(BigDecimal.ZERO)
                         .finalBalance(BigDecimal.ZERO)
                         .build());
+
+        // Atualiza os totais de acordo com o tipo do lançamento (CREDIT / DEBIT)
+        if ("CREDIT".equalsIgnoreCase(eventPayload.type())) {
+            balance.setTotalCredit(balance.getTotalCredit().add(eventPayload.amount()));
+        } else if ("DEBIT".equalsIgnoreCase(eventPayload.type())) {
+            balance.setTotalDebit(balance.getTotalDebit().add(eventPayload.amount()));
+        } else {
+            log.warn("Tipo de transação desconhecido recebido: {}", eventPayload.type());
+            return;
+        }
+
+        // Recalcula o saldo final (Créditos - Débitos)
+        balance.setFinalBalance(balance.getTotalCredit().subtract(balance.getTotalDebit()));
+
+        dailyBalanceRepository.save(balance);
+        log.info("Saldo consolidado atualizado com sucesso. Merchant: {}, Data: {}, Saldo Final: {}", 
+                balance.getMerchantId(), balance.getDate(), balance.getFinalBalance());
+    }
+
+    /**
+     * Retorna a consolidação do saldo diário de um comerciante para uma data específica.
+     */
+    @Transactional(readOnly = true)
+    public DailyBalanceDTO getDailyBalance(String merchantId, LocalDate date) {
+        LocalDate searchDate = date != null ? date : LocalDate.now();
+
+        DailyBalance balance = dailyBalanceRepository
+                .findByMerchantIdAndDate(merchantId, searchDate)
+                .orElseGet(() -> DailyBalance.builder()
+                        .merchantId(merchantId)
+                        .date(searchDate)
+                        .totalCredit(BigDecimal.ZERO)
+                        .totalDebit(BigDecimal.ZERO)
+                        .finalBalance(BigDecimal.ZERO)
+                        .build());
+
+        return new DailyBalanceDTO(
+                balance.getMerchantId(),
+                balance.getDate(),
+                balance.getTotalCredit(),
+                balance.getTotalDebit(),
+                balance.getFinalBalance()
+        );
     }
 }
