@@ -147,7 +147,8 @@ Testes do Consolidation Service:
 cd docs/consolidation-service
 mvn test
 ```
-### Nota sobre o Maven Wrapper (mvnw): Se optar por utilizar o wrapper local, certifique-se de executar ./mvnw test a partir do diretório onde os arquivos mvnw e .mvn/ estiverem localizados. Caso contrário, utilize o comando mvn padrão do sistema.
+### 📌Nota 
+Sobre o Maven Wrapper (mvnw): Se optar por utilizar o wrapper local, certifique-se de executar ./mvnw test a partir do diretório onde os arquivos mvnw e .mvn/ estiverem localizados. Caso contrário, utilize o comando mvn padrão do sistema.
 
 ### 📌 Principais Endpoints da API
 ### 1. transaction-service (http://localhost:8080)
@@ -173,7 +174,8 @@ POST /api/v1/transactions: Registra um novo crédito ou débito.
 
 * Métricas Prometheus: GET http://localhost:8080/actuator/prometheus | `GET
 ---
-### Desenhos
+## Desenhos
+
 **Figura 1: Arquitetura Alvo da Solução Contexto**
 ![Contexto](DiagramaC4_contexto.jpg)
 ---
@@ -182,3 +184,4 @@ POST /api/v1/transactions: Registra um novo crédito ou débito.
 ---
 **Figura 3: Arquitetura Alvo da Solução Container AWS Infra**
 ![Container](DiagramaC4_container_AWS_Infra.jpg)
+---
