@@ -1,10 +1,11 @@
 version: '3.8'
 
 services:
-  # Instância do PostgreSQL
+  # 1. Banco de Dados PostgreSQL
   postgres:
     image: postgres:15-alpine
-    container_name: postgres
+    container_name: postgres-fluxocaixa
+    restart: always
     environment:
       POSTGRES_DB: fluxocaixa
       POSTGRES_USER: postgres
@@ -15,24 +16,38 @@ services:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - fluxocaixa-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d fluxocaixa"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
-  # Instância do RabbitMQ
+  # 2. Broker RabbitMQ com Painel de Gerenciamento Web
   rabbitmq:
     image: rabbitmq:3-management-alpine
-    container_name: rabbitmq
+    container_name: rabbitmq-fluxocaixa
+    restart: always
     ports:
-      - "5672:5672"
-      - "15672:15672"
+      - "5672:5672"   # Porta do protocolo AMQP
+      - "15672:15672" # Painel Web (http://localhost:15672)
     environment:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
     networks:
       - fluxocaixa-net
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-  # Microsserviço de Lançamentos
+  # 3. Microsserviço de Lançamentos
   transaction-service:
-    build: ./transaction-service
+    build:
+      context: ./docs/transaction-service
+      dockerfile: Dockerfile
     container_name: transaction-service
+    restart: on-failure
     ports:
       - "8080:8080"
     environment:
@@ -41,16 +56,23 @@ services:
       SPRING_DATASOURCE_PASSWORD: postgres
       SPRING_RABBITMQ_HOST: rabbitmq
       SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: guest
+      SPRING_RABBITMQ_PASSWORD: guest
     depends_on:
-      - postgres
-      - rabbitmq
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     networks:
       - fluxocaixa-net
 
-  # Microsserviço de Consolidação Diária
+  # 4. Microsserviço de Consolidação Diária
   consolidation-service:
-    build: ./consolidation-service
+    build:
+      context: ./docs/consolidation-service
+      dockerfile: Dockerfile
     container_name: consolidation-service
+    restart: on-failure
     ports:
       - "8081:8081"
     environment:
@@ -59,15 +81,21 @@ services:
       SPRING_DATASOURCE_PASSWORD: postgres
       SPRING_RABBITMQ_HOST: rabbitmq
       SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: guest
+      SPRING_RABBITMQ_PASSWORD: guest
     depends_on:
-      - postgres
-      - rabbitmq
-      - transaction-service
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      transaction-service:
+        condition: service_started
     networks:
       - fluxocaixa-net
 
 volumes:
   postgres_data:
+    driver: local
 
 networks:
   fluxocaixa-net:
