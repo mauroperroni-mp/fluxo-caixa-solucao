@@ -6,16 +6,15 @@ Este documento define as diretrizes e mecanismos de proteção adotados para gar
 
 ## 1. Segurança na Camada de Integração (APIs REST)
 
-```json
-
-[ Cliente / POS / App ]
-│
-▼  mTLS / HTTPS (TLS 1.3)
+```text
+      [ Cliente / POS / App ]
+                  │
+                  ▼  mTLS / HTTPS (TLS 1.3)
 ┌──────────────────────────────────┐
 │      API Gateway / Ingress       │ ──► Autenticação OAuth2 / JWT (Keycloak)
 └─────────────────┬────────────────┘
-│
-▼ (Rede Privada VPC)
+                  │
+                  ▼ (Rede Privada VPC)
 ┌──────────────────────────────────┐
 │  transaction / consolidation     │
 └──────────────────────────────────┘
