@@ -6,7 +6,7 @@ Para garantir a alta disponibilidade e suportar a vazão de picos sem degradaç�
 
 ## 1. Mapeamento da Arquitetura de Observabilidade
 
-```json
+```text
 
 ┌───────────────────────────┐      ┌─────────────────────────┐
 │ transaction/consolidation │ ───► │ Micrometer / Actuator   │
