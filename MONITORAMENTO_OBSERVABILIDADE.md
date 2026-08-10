@@ -11,8 +11,8 @@ Para garantir a alta disponibilidade e suportar a vazão de picos sem degradaç�
 ┌───────────────────────────┐      ┌─────────────────────────┐
 │ transaction/consolidation │ ───► │ Micrometer / Actuator   │
 └───────────────────────────┘      └────────────┬────────────┘
-│ (Scrape)
-▼
+                                                │ (Scrape)
+                                                ▼
 ┌───────────────────────────┐      ┌─────────────────────────┐
 │     Grafana Dashboards    │ ◄─── │   Prometheus Server     │
 └───────────────────────────┘      └─────────────────────────┘
